@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import DataSet from "../../../styles/Dataset";
 import { ArrowBack } from '@material-ui/icons';
 import UrlConfig from '../../../../configs/internalurlmapping';
+import ErrorOutlineIcon from '@material-ui/icons/ErrorOutline';
 const DatasetDetails = (props) => {
     const { classes } = props;
     const handleCardNavigation = () => { }
@@ -14,7 +15,7 @@ const DatasetDetails = (props) => {
             </div>
 
             <Paper elevation={3} className={classes.paper}>
-                <div className={classes.iconStyle}>
+                <div>
                     <><Button size="small" color="primary" className={classes.backButton} startIcon={<ArrowBack />} onClick={() => handleCardNavigation()}>Back</Button></>
                 </div>
 
@@ -126,20 +127,34 @@ const DatasetDetails = (props) => {
                     < Grid item xs={2} sm={2} md={2} lg={2} xl={2} >
                         <Grid container style={{ borderRadius: '10%' }}>
                             < Grid item xs={12} sm={12} md={12} lg={12} xl={12} style={{
-                                backgroundColor: '#00000029', textAlign: 'center', padding: '5px'
+                                textAlign: 'center',
+                                backgroundColor: '#F2F2F4',
+                                borderBottom: '1px solid #0000001F',
+                                padding: '21px 0px',
+                                borderTopLeftRadius: '4px',
+                                borderTopRightRadius: '4px'
                             }}>
                                 <Typography variant="body2" gutterBottom>
                                     Status
                                 </Typography>
-                                <Typography variant="body2">
+                                <Typography variant="body2" style={{ color: "#18A868" }}>
                                     Published
                                 </Typography>
                             </Grid>
                             < Grid item xs={12} sm={12} md={12} lg={12} xl={12} style={{
-                                backgroundColor: '#00000029', textAlign: 'center', padding: '5px'
+                                textAlign: 'center',
+                                backgroundColor: '#F2F2F4',
+                                padding: '10px 0px',
+                                borderBottomLeftRadius: '4px',
+                                borderBottomRightRadius: '4px'
                             }}>
                                 <Typography variant="body2" gutterBottom>
-                                    Action
+                                    <div
+                                        style={{ display: 'inline-flex', alignItems: 'center' }}
+                                    >
+                                        Action
+                                        <ErrorOutlineIcon style={{ marginLeft: '1%' }} fontSize="small" />
+                                    </div>
                                 </Typography>
                                 <Button variant='contained' color="primary">Append</Button>
                             </Grid>

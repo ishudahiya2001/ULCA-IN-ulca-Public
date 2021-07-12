@@ -243,9 +243,10 @@ const DataSet = (theme) => ({
     },
     backButton: {
         boxShadow: "none",
-        paddingTop: "5px",
-        marginLeft: "30px",
-        marginRight: ".5rem"
+        // paddingTop: "5px",
+        marginLeft: "31px",
+        marginRight: ".5rem",
+        marginTop: "20px"
 
     },
     selectGrid: {
@@ -256,7 +257,7 @@ const DataSet = (theme) => ({
     },
     toolGrid: {
         alignItems: 'center',
-        padding: '17px 36px',
+        padding: '0px 36px 17.5px 36px',
     },
     tempGrid: {
         paddingLeft: '1rem',
