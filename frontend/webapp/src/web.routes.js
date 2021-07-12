@@ -21,6 +21,7 @@ import ActiveUser from "./ui/container/UserManagement/ActiveUser"
 import ReadymadeDataset from "./ui/container/DataSet/ReadymadeDataset.jsx/ReadymadeDataset";
 import PopUp from "./ui/container/DataSet/ReadymadeDataset.jsx/PopUp";
 import FilterList from "./ui/container/DataSet/DatasetView/FilterList";
+import DatasetDetails from "./ui/container/DataSet/DatasetView/DatasetDetails";
 
 const PrivateRoute = ({ path, component: Component, authenticate, title, token, ...rest }) => {
   return (
@@ -162,6 +163,14 @@ export default function App() {
             component={FilterList}
             authenticate={authenticateUser}
             currentMenu="pop-up"
+            dontShowHeader={false}
+          />
+           <PrivateRoute
+            path={`${process.env.PUBLIC_URL}/dataset-details`}
+            userRoles={[""]}
+            component={DatasetDetails}
+            authenticate={authenticateUser}
+            currentMenu="dataset-details"
             dontShowHeader={false}
           />
 

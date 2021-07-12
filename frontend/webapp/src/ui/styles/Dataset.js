@@ -229,7 +229,7 @@ const DataSet = (theme) => ({
     filterContainer: {
         borderBottom: '1px solid #00000029',
         paddingLeft: '18.5px',
-        marginTop:'20px'
+        marginTop: '20px'
     },
     filterTypo: {
         marginBottom: '9px'
@@ -241,6 +241,34 @@ const DataSet = (theme) => ({
         margin: '9px 16px 9px auto',
         width: '80px'
     },
+    backButton: {
+        boxShadow: "none",
+        paddingTop: "5px",
+        marginLeft: "1.3rem",
+        marginRight: ".5rem"
+
+    },
+    selectGrid: {
+        boxShadow: '3px 0 2px -2px #00000029',
+        height: '54px',
+        alignContent: 'center',
+        display: 'grid'
+    },
+    toolGrid: {
+        alignItems: 'center',
+         padding: '2%'
+    },
+    tempGrid: {
+        // paddingLeft: '1rem',
+        boxShadow: '3px 0 2px -2px #00000029',
+        height: '54px',
+        alignContent: 'center',
+    },
+    lastGrid: {
+        // paddingLeft: '1rem',
+        height: '54px',
+        alignContent: 'center',
+    }
 });
 
 export default DataSet;
