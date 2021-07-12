@@ -244,7 +244,7 @@ const DataSet = (theme) => ({
     backButton: {
         boxShadow: "none",
         paddingTop: "5px",
-        marginLeft: "1.3rem",
+        marginLeft: "30px",
         marginRight: ".5rem"
 
     },
@@ -256,18 +256,22 @@ const DataSet = (theme) => ({
     },
     toolGrid: {
         alignItems: 'center',
-         padding: '2%'
+        padding: '17px 36px',
     },
     tempGrid: {
-        // paddingLeft: '1rem',
+        paddingLeft: '1rem',
         boxShadow: '3px 0 2px -2px #00000029',
         height: '54px',
-        alignContent: 'center',
+        //  alignContent: 'center',
+    },
+    firstGrid: {
+        boxShadow: '3px 0 2px -2px #00000029',
+        height: '54px',
     },
     lastGrid: {
-        // paddingLeft: '1rem',
+        paddingLeft: '1rem',
         height: '54px',
-        alignContent: 'center',
+        // alignContent: 'center',
     }
 });
 

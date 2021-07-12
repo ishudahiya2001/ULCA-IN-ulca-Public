@@ -1,4 +1,4 @@
-import { withStyles, Typography, MuiThemeProvider, Paper, Button, Grid, Divider } from "@material-ui/core";
+import { withStyles, Typography, MuiThemeProvider, Paper, Button, Grid } from "@material-ui/core";
 import BreadCrum from '../../../components/common/Breadcrum';
 import React, { useEffect, useState } from "react";
 import DataSet from "../../../styles/Dataset";
@@ -24,7 +24,7 @@ const DatasetDetails = (props) => {
                         <Grid container spacing={3}>
                             < Grid item xs={12} sm={12} md={12} lg={12} xl={12}>
                                 <Grid container>
-                                    < Grid item xs={1} sm={1} md={1} lg={1} xl={1}>
+                                    < Grid item xs={2} sm={2} md={2} lg={2} xl={2} className={classes.firstGrid}>
                                         <Typography variant="body2" gutterBottom>
                                             Dataset Id
                                         </Typography>
@@ -32,10 +32,7 @@ const DatasetDetails = (props) => {
                                             0005127
                                         </Typography>
                                     </Grid>
-                                    < Grid item xs={1} sm={1} md={1} lg={1} xl={1}>
-                                        <Divider orientation="vertical"></Divider>
-                                    </Grid>
-                                    < Grid item xs={2} sm={2} md={2} lg={2} xl={2}>
+                                    < Grid item xs={4} sm={4} md={4} lg={4} xl={4} className={classes.tempGrid}>
                                         <Typography variant="body2" gutterBottom>
                                             Dataset Name
                                         </Typography>
@@ -43,10 +40,7 @@ const DatasetDetails = (props) => {
                                             Tourism Set-1 Parallel Text Corpus
                                         </Typography>
                                     </Grid>
-                                    < Grid item xs={1} sm={1} md={1} lg={1} xl={1}>
-                                        <Divider orientation="vertical"></Divider>
-                                    </Grid>
-                                    <Grid item xs={1} sm={1} md={1} lg={1} xl={1}>
+                                    <Grid item xs={2} sm={2} md={2} lg={2} xl={2} className={classes.tempGrid}>
                                         <Typography variant="body2" gutterBottom>
                                             Dataset Type
                                         </Typography>
@@ -54,10 +48,7 @@ const DatasetDetails = (props) => {
                                             Parallel Dataset
                                         </Typography>
                                     </Grid>
-                                    < Grid item xs={1} sm={1} md={1} lg={1} xl={1}>
-                                        <Divider orientation="vertical"></Divider>
-                                    </Grid>
-                                    <Grid item xs={1} sm={1} md={1} lg={1} xl={1}>
+                                    <Grid item xs={2} sm={2} md={2} lg={2} xl={2} className={classes.tempGrid}>
                                         <Typography variant="body2" gutterBottom>
                                             Submitted On
                                         </Typography>
@@ -65,10 +56,7 @@ const DatasetDetails = (props) => {
                                             14/4/2021
                                         </Typography>
                                     </Grid>
-                                    < Grid item xs={1} sm={1} md={1} lg={1} xl={1}>
-                                        <Divider orientation="vertical"></Divider>
-                                    </Grid>
-                                    <Grid xs={2} sm={2} md={2} lg={2} xl={2} className={classes.lastGrid}>
+                                    <Grid className={classes.lastGrid}>
                                         <Typography variant="body2" gutterBottom>
                                             Last Updated On
                                         </Typography>
@@ -77,17 +65,16 @@ const DatasetDetails = (props) => {
                                         </Typography>
 
                                     </Grid>
-                                    
                                 </Grid>
                             </Grid>
                             < Grid item xs={12} sm={12} md={12} lg={12} xl={12}>
                                 <Grid container>
-                                    < Grid item xs={2} sm={2} md={2} lg={2} xl={2} className={classes.tempGrid}>
+                                    < Grid item xs={2} sm={2} md={2} lg={2} xl={2} className={classes.firstGrid}>
                                         <Typography variant="body2" gutterBottom>
                                             Language Pair
                                         </Typography>
                                         <Typography variant="body2">
-                                            #Deleted Records
+                                            English-Hindi
                                         </Typography>
                                     </Grid>
                                     < Grid item xs={2} sm={2} md={2} lg={2} xl={2} className={classes.tempGrid}>
@@ -95,7 +82,7 @@ const DatasetDetails = (props) => {
                                             Domain
                                         </Typography>
                                         <Typography variant="body2">
-                                            Legal, News
+                                            Legal, News, Sports
                                         </Typography>
                                     </Grid>
                                     <Grid item xs={2} sm={2} md={2} lg={2} xl={2} className={classes.tempGrid}>
@@ -114,7 +101,7 @@ const DatasetDetails = (props) => {
                                             3,250
                                         </Typography>
                                     </Grid>
-                                    <Grid xs={2} sm={2} md={2} lg={2} xl={2} className={classes.lastGrid}>
+                                    <Grid item xs={2} sm={2} md={2} lg={2} xl={2} className={classes.tempGrid}>
                                         <Typography variant="body2" gutterBottom>
                                             #Deleted Records
                                         </Typography>
@@ -122,7 +109,7 @@ const DatasetDetails = (props) => {
                                             11,132
                                         </Typography>
                                     </Grid>
-                                    <Grid xs={2} sm={2} md={2} lg={2} xl={2} className={classes.lastGrid}>
+                                    <Grid item className={classes.lastGrid}>
                                         <Typography variant="body2" gutterBottom>
                                             #Deleted Records
                                         </Typography>
