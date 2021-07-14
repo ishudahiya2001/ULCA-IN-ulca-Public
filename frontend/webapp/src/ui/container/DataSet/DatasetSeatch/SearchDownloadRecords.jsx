@@ -16,6 +16,7 @@ import Snackbar from '../../../components/common/Snackbar';
 import BreadCrum from '../../../components/common/Breadcrum';
 import UrlConfig from '../../../../configs/internalurlmapping';
 import { PageChange } from "../../../../redux/actions/api/DataSet/DatasetView/DatasetAction";
+import DatasetItemsAPI from "../../../../redux/actions/api/Common/DatasetItems";
 import C from "../../../../redux/actions/constants";
 import { useDispatch, useSelector } from "react-redux";
 import { useState, useEffect, useRef } from 'react';
@@ -28,6 +29,7 @@ import { Language, FilterBy } from '../../../../configs/DatasetItems';
 import SubmitSearchRequest from '../../../../redux/actions/api/DataSet/DatasetSearch/SubmitSearchRequest';
 import DatasetType from '../../../../configs/DatasetItems';
 import getLanguageLabel from '../../../../utils/getLabel';
+import APITransport from "../../../../redux/actions/apitransport/apitransport";
 const StyledMenu = withStyles({
 })((props) => (
     <Menu
@@ -83,6 +85,9 @@ const SearchAndDownloadRecords = (props) => {
 
     useEffect(() => {
 
+        const userObj = new DatasetItemsAPI();
+        dispatch(APITransport(userObj));
+
         previousUrl.current = params;
 
         let data = detailedReport.responseData.filter((val) => {
@@ -99,7 +104,7 @@ const SearchAndDownloadRecords = (props) => {
             let source = data[0].sourceLanguage && Language.filter(val => val.value === data[0].sourceLanguage[0])[0].label
             let domain = data[0].domain && FilterBy.domain.filter(val => val.value === data[0].domain[0])[0].label
             let collectionMethod = data[0].collection && FilterBy.collectionMethod.filter(val => val.value === data[0].collection[0])[0].label
-            let label=data[0].search_criteria && data[0].search_criteria.split('|')[0]
+            let label = data[0].search_criteria && data[0].search_criteria.split('|')[0]
             setFilterBy({
                 ...filterBy, domain, collectionMethod
             })
@@ -107,7 +112,7 @@ const SearchAndDownloadRecords = (props) => {
             //   setLanguagePair({ target, source: getLanguageLabel(data[0].sourceLanguage)})
             setDatasetType({ [data[0].datasetType]: true })
             console.log(label)
-            
+
             setLabel(label)
         }
 
@@ -125,7 +130,7 @@ const SearchAndDownloadRecords = (props) => {
                 collectionMethod: ""
             })
             setLabel('Parallel Dataset')
-            setDatasetType({'parallel-corpus': true})
+            setDatasetType({ 'parallel-corpus': true })
         }
         previousUrl.current = params;
     })

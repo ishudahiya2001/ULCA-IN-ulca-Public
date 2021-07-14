@@ -13,7 +13,8 @@ const endpoints = {
   activateUser :"/ulca/user-mgmt/v1/users/verify-user",
   forgotPassword: "/ulca/user-mgmt/v1/users/forgot-password",
   tokenSearch:'/ulca/user-mgmt/v1/users/token-search',
-  resetPassword:'/ulca/user-mgmt/v1/users/reset-password'
+  resetPassword:'/ulca/user-mgmt/v1/users/reset-password',
+  getDatasetItems:'/ulca/data-metric/v0/store/attributes'
 };
 
 export default endpoints;

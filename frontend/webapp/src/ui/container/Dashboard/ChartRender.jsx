@@ -46,7 +46,6 @@ const ChartRender = (props) => {
 
 	}
 	const fetchParams = (event) => {
-		debugger
 		var source = ""
 		let targetLanguage = ""
 		if (selectedOption.value === "parallel-corpus") {
@@ -64,7 +63,6 @@ const ChartRender = (props) => {
 	}
 
 	const fetchNextParams = (eventValue) => {
-		debugger
 		var source = ""
 		let targetLanguage = ""
 		let event = { "field": null, "value": eventValue && eventValue.hasOwnProperty("_id") && eventValue._id }
@@ -168,7 +166,6 @@ const ChartRender = (props) => {
 	}
 
 	const handleSelectChange = (dataSet, event, filter, page) => {
-		debugger
 		setSelectedOption(dataSet)
 		switch (dataSet.value) {
 			case 'parallel-corpus':
