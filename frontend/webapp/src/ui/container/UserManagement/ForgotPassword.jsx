@@ -28,6 +28,7 @@ const ForgotPassword = (props) => {
     email: false,
   });
   const [loading, setLoading] = useState(false);
+  const [buttonDisable, setButtonDisable]=useState(false);
 
   const handleChange = (prop) => (event) => {
     setValues({ ...values, [prop]: event.target.value });
@@ -80,6 +81,8 @@ const ForgotPassword = (props) => {
             message: rsp_data.message,
             variant: 'success'
           })
+          setButtonDisable(true);
+          setTimeout(() => history.push(`${process.env.PUBLIC_URL}/user/login`), 3000)
         }
         else {
           setSnackbarInfo({
@@ -134,7 +137,7 @@ const ForgotPassword = (props) => {
           onClick={() => {
             HandleSubmitValidate();
           }}
-          disabled={loading}>
+          disabled={loading ? loading:buttonDisable}>
           {loading && <CircularProgress size={24} className={classes.buttonProgress} />}
           Send Link
         </Button>

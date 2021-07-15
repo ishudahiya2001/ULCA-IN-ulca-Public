@@ -95,6 +95,7 @@ const ResetPassword = (props) => {
             message: rsp_data.message,
             variant: 'success'
           })
+          setTimeout(() => history.push(`${process.env.PUBLIC_URL}/user/login`), 3000)
         }
         else {
           setSnackbarInfo({
