@@ -24,16 +24,39 @@ const ForgotPassword = (props) => {
     variant: 'success'
   })
   const history = useHistory();
+  const [error, setError] = useState({
+    email: false,
+  });
   const [loading, setLoading] = useState(false);
 
   const handleChange = (prop) => (event) => {
     setValues({ ...values, [prop]: event.target.value });
+    setError({ ...error, [prop]: false });
+
   };
 
   const handleSnackbarClose = () => {
     setSnackbarInfo({ ...snackbar, open: false })
   }
+  const ValidateEmail = (mail) => {
+    if (/^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/.test(mail)) {
+      return (true)
+    }
+    else {
+      return false;
+    }
+  }
+  const HandleSubmitValidate = () => {
+    if (!ValidateEmail(values.email)) {
+      setError({ ...error, email: true })
+    }
+    else {
+      HandleSubmit()
+      setLoading(true);
+    }
 
+
+  }
   const HandleSubmit = () => {
     const obj = new ForgotPasswordAPI(values.email)
     // setSnackbarInfo({
@@ -87,9 +110,11 @@ const ForgotPassword = (props) => {
           required
           onChange={handleChange("email")}
           id="outlined-required"
+          error={error.email ? true : false}
           value={values.email}
+          helperText={error.email ? "Invalid email" : ""}
           label="Email address"
-        // variant="outlined"
+          variant="outlined"
         />
 
         <div className={classes.loginLink}>
@@ -107,8 +132,7 @@ const ForgotPassword = (props) => {
           size="large"
           className={classes.fullWidth}
           onClick={() => {
-            HandleSubmit();
-            setLoading(true);
+            HandleSubmitValidate();
           }}
           disabled={loading}>
           {loading && <CircularProgress size={24} className={classes.buttonProgress} />}

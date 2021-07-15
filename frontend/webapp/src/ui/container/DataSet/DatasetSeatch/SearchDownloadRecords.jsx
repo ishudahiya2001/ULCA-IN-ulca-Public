@@ -25,9 +25,9 @@ import RequestNumberCreation from "./RequestNumberCreation";
 import { useHistory, useParams } from 'react-router';
 import Autocomplete from '@material-ui/lab/Autocomplete';
 import MultiAutocomplete from '../../../components/common/Autocomplete';
-import { Language, FilterBy } from '../../../../configs/DatasetItems';
+//import { Language, FilterBy } from '../../../../configs/DatasetItems';
 import SubmitSearchRequest from '../../../../redux/actions/api/DataSet/DatasetSearch/SubmitSearchRequest';
-import DatasetType from '../../../../configs/DatasetItems';
+// import DatasetType from '../../../../configs/DatasetItems';
 import getLanguageLabel from '../../../../utils/getLabel';
 import APITransport from "../../../../redux/actions/apitransport/apitransport";
 const StyledMenu = withStyles({
@@ -57,15 +57,10 @@ const SearchAndDownloadRecords = (props) => {
         source: '',
         target: []
     });
-    // const [filterBy, setFilterBy] = useState({
-    //     domain: [],
-    //     source: [],
-    //     collectionMethod: []
-    // });
     const [filterBy, setFilterBy] = useState({
-        domain: '',
+        domains: '',
         source: '',
-        collectionMethod: ''
+        collectionMethod_collectionDescriptions: ''
     });
 
     const [datasetType, setDatasetType] = useState({
@@ -80,7 +75,7 @@ const SearchAndDownloadRecords = (props) => {
 
     const previousUrl = useRef();
 
-
+    const DatasetItems = useSelector((state) => state.fetchDatasetItems.result);
     const detailedReport = useSelector((state) => state.mySearchReport);
 
     useEffect(() => {
@@ -101,18 +96,15 @@ const SearchAndDownloadRecords = (props) => {
             })
 
             let target = data[0].targetLanguage ? getLanguageLabel(data[0].targetLanguage) : getLanguageLabel(data[0].sourceLanguage)
-            let source = data[0].sourceLanguage && Language.filter(val => val.value === data[0].sourceLanguage[0])[0].label
-            let domain = data[0].domain && FilterBy.domain.filter(val => val.value === data[0].domain[0])[0].label
-            let collectionMethod = data[0].collection && FilterBy.collectionMethod.filter(val => val.value === data[0].collection[0])[0].label
+            let source = data[0].sourceLanguage && DatasetItems.sourceLanguage.filter(val => val.value === data[0].sourceLanguage[0])[0].label
+            let domains = data[0].domain && DatasetItems.domains.filter(val => val.value === data[0].domain[0])[0].label
+            let collectionMethod_collectionDescriptions = data[0].collection && DatasetItems.collectionMethod_collectionDescriptions.filter(val => val.value === data[0].collection[0])[0].label
             let label = data[0].search_criteria && data[0].search_criteria.split('|')[0]
             setFilterBy({
-                ...filterBy, domain, collectionMethod
+                ...filterBy, domains, collectionMethod_collectionDescriptions
             })
             setLanguagePair({ target, source })
-            //   setLanguagePair({ target, source: getLanguageLabel(data[0].sourceLanguage)})
             setDatasetType({ [data[0].datasetType]: true })
-            console.log(label)
-
             setLabel(label)
         }
 
@@ -125,9 +117,9 @@ const SearchAndDownloadRecords = (props) => {
         if (previousUrl.current !== params && previousUrl.current !== 'initiate') {
             setLanguagePair({ target: [], source: "" })
             setFilterBy({
-                domain: "",
+                domains: "",
                 source: "",
-                collectionMethod: ""
+                collectionMethod_collectionDescriptions: ""
             })
             setLabel('Parallel Dataset')
             setDatasetType({ 'parallel-corpus': true })
@@ -188,8 +180,6 @@ const SearchAndDownloadRecords = (props) => {
     const getLabel = () => {
         if (datasetType['parallel-corpus'])
             return "Target Language *"
-        // else if (datasetType['ocr-corpus'])
-        //     return "Script *"
         else
             return "Language *"
     }
@@ -197,16 +187,14 @@ const SearchAndDownloadRecords = (props) => {
     const getTitle = () => {
         if (datasetType['parallel-corpus'])
             return "Select Language Pair"
-        // else if (datasetType['ocr-corpus'])
-        //     return "Select Script"
         else
             return "Select Language"
     }
     const clearfilter = () => {
         setFilterBy({
-            domain: "",
+            domains: "",
             source: "",
-            collectionMethod: ""
+            collectionMethod_collectionDescriptions: ""
         });
         setLanguagePair({
             source: "",
@@ -253,29 +241,21 @@ const SearchAndDownloadRecords = (props) => {
         setSnackbarInfo({ ...snackbar, open: false })
     }
     const getValueForLabel = (label) => {
-        return Language.filter(val => val.label === label)[0]
+        return DatasetItems.sourceLanguage.filter(val => val.label === label)[0]
 
     }
     const getFilterValueForLabel = (data, label) => {
-        //  if (data === 'domain') {
-        return (FilterBy[data].filter(val => val.label === label)[0])
-        //  }
-        // else if (data === 'collectionMethod') {
-        //     return (FilterBy.collectionMethod.filter(val => val.label === label)[0])
-        // }
+        return (DatasetItems[data].filter(val => val.label === label)[0])
     }
 
     const handleSubmitBtn = () => {
         let tgt = languagePair.target.map(trgt => trgt.value)
-        //let domain = filterBy.domain.map(domain => domain.value)
-        //let collectionMethod = filterBy.collectionMethod.map(method => method.value)
-        let domain = filterBy.domain && [getFilterValueForLabel('domain', filterBy.domain).value]
-        let collectionMethod = filterBy.collectionMethod && [getFilterValueForLabel('collectionMethod', filterBy.collectionMethod).value]
+        let domain = filterBy.domains && [getFilterValueForLabel('domains', filterBy.domains).value]
+        let collectionMethod = filterBy.collectionMethod_collectionDescriptions && [getFilterValueForLabel('collectionMethod_collectionDescriptions', filterBy.collectionMethod_collectionDescriptions).value]
         if (datasetType['parallel-corpus']) {
             if (languagePair.source && languagePair.target.length) {
                 let source = getValueForLabel(languagePair.source).value
                 makeSubmitAPICall(source, tgt, domain, collectionMethod, datasetType)
-                //  makeSubmitAPICall(languagePair.source, tgt, domain, collectionMethod, datasetType)
             }
 
             else if (!languagePair.source && !languagePair.target.length) {
@@ -310,18 +290,8 @@ const SearchAndDownloadRecords = (props) => {
 
     const renderDatasetButtons = () => {
         return (
-            // DatasetType.map((type, i) => {
-            //     return (
-            // <Button size='small' className={classes.innerButton} variant="outlined"
-            //     color={datasetType[type.value] && "primary"}
-            //     key={i}
-            //     onClick={() => handleDatasetClick(type.value)}
-            // >
-            //     {type.label}
-            // </Button>
             <>
                 <Button className={classes.menuStyle}
-                    // disabled={page !== 0 ? true : false}
                     color="inherit"
                     onClick={(e) => openEl(e.currentTarget)}
                     variant="text">
@@ -337,7 +307,7 @@ const SearchAndDownloadRecords = (props) => {
                     className={classes.styledMenu1}
                 >
                     {
-                        DatasetType.map(menu => {
+                        DatasetItems.datasetType.map(menu => {
 
                             return <MenuItem
                                 value={menu.value}
@@ -356,47 +326,11 @@ const SearchAndDownloadRecords = (props) => {
                     }
                 </StyledMenu>
             </>
-
-            // )
-            // }
-        )
-
-        // )
-    }
-
-    const renderFilterByOptions = (id, options, filter, value, label) => {
-        return (
-            <MultiAutocomplete
-                id={id}
-                options={options}
-                filter={filter}
-                value={value}
-                handleOnChange={handleFilterByChange}
-                label={label}
-            />
-
         )
     }
-    // const renderFilterByfield = (id, label, value, filter) => {
-    //     return (
-    //         <TextField className={classes.subHeader}
-    //             fullWidth
-    //             select
-    //             id={id}
-    //             label={label}
-    //             value={value}
-    //             onChange={(event) => handleFilterByChange(event.target.value, id)}
-    //         >
-    //             {filter.map((option) => (
-    //                 <MenuItem key={option.value} value={option.value}>
-    //                     {option.label}
-    //                 </MenuItem>
-    //             ))}
-    //         </TextField>
-    //     )
-    // }
+
     const renderFilterByfield = (id, label, value, filter) => {
-        let filterByOptions = FilterBy[id].map(data => data.label)
+        let filterByOptions = DatasetItems[id].map(data => data.label)
         return (
             <Autocomplete
                 value={filterBy[id] ? filterBy[id] : null}
@@ -409,7 +343,7 @@ const SearchAndDownloadRecords = (props) => {
         )
     }
     const renderTexfield = (id, label, value, options, filter) => {
-        let labels = Language.map(lang => lang.label)
+        let labels = DatasetItems.sourceLanguage.map(lang => lang.label)
         return (
             <Autocomplete
                 value={languagePair.source ? languagePair.source : null}
@@ -421,8 +355,6 @@ const SearchAndDownloadRecords = (props) => {
                     helperText={srcError && "This field is mandatory"}
                 />}
             />
-
-
         )
     }
     const renderCheckBox = (name, color, label) => {
@@ -441,18 +373,13 @@ const SearchAndDownloadRecords = (props) => {
         )
     }
     const getTargetLang = () => {
-        return Language.filter(lang => lang.label !== languagePair.source)
+        if (datasetType['parallel-corpus'])
+            return DatasetItems.targetLanguage.filter(lang => lang.label !== languagePair.source)
+        else
+            return DatasetItems.sourceLanguage
     }
     const renderclearNsubmitButtons = () => {
         return (
-            /* <div className={classes.clearNSubmit}>
-                      <Button size="large"  variant="outlined" onClick={clearfilter}>
-                          Clear
-                  </Button>
-                      <Button size="large" className={classes.buttonStyle} variant="contained" color="primary" onClick={handleSubmitBtn}>
-                          Submit
-                  </Button>
-                  </div> */
             <Grid container className={classes.clearNSubmit}>
                 <Grid item xs={3}></Grid>
                 <Grid item xs={9}>
@@ -494,6 +421,7 @@ const SearchAndDownloadRecords = (props) => {
                                 {datasetType['parallel-corpus'] && renderTexfield("select-source-language", "Source Language *")}
                             </div>
                             <div className={classes.autoComplete}>
+                                {/* {datasetType['parallel-corpus'] ? */}
                                 <MultiAutocomplete
                                     id="language-target"
                                     options={getTargetLang()}
@@ -503,15 +431,18 @@ const SearchAndDownloadRecords = (props) => {
                                     label={getLabel()}
                                     error={tgtError}
                                     helperText="This field is mandatory"
+                                    multiple={datasetType['parallel-corpus'] ? true : false}
                                 />
+                                {/* : renderTexfield("select-source-language", "Source Language *")} */}
+
                             </div>
                             <Typography className={classes.subHeader} variant="body1">Filter by</Typography>
                             <Grid container spacing={1}>
                                 <Grid className={classes.subHeader} item xs={12} sm={12} md={12} lg={12} xl={12}>
-                                    {renderFilterByfield("domain", "Select Domain", filterBy.domain, FilterBy.domain)}
+                                    {renderFilterByfield("domains", "Select Domain", filterBy.domains, DatasetItems.domains)}
                                 </Grid>
                                 <Grid className={classes.subHeader} item xs={12} sm={12} md={12} lg={12} xl={12}>
-                                    {renderFilterByfield("collectionMethod", "Select Collection Method", filterBy.collectionMethod, FilterBy.collectionMethod)}
+                                    {renderFilterByfield("collectionMethod_collectionDescriptions", "Select Collection Method", filterBy.collectionMethod_collectionDescriptions, DatasetItems.collectionMethod_collectionDescriptions)}
                                 </Grid>
                             </Grid>
 

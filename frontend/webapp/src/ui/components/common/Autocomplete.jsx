@@ -12,6 +12,7 @@ const checkedIcon = <CheckBoxIcon fontSize="small" />;
 export default function CheckboxesTags(props) {
   return (
     <Autocomplete
+      //  multiple={props.multiple}
       multiple
       id={props.id}
       options={props.options}
@@ -34,7 +35,7 @@ export default function CheckboxesTags(props) {
         </React.Fragment>
       )}
       renderInput={(params) => (
-        <TextField {...params} variant="standard" label={props.label} error={props.error} helperText={props.error && props.helperText}/>
+        <TextField {...params} variant="standard" label={props.label} error={props.error} helperText={props.error && props.helperText} />
       )}
     />
   );

@@ -111,6 +111,10 @@ const ResetPassword = (props) => {
         console.log(error)
       })
   };
+  const handlePrevent = (e) => {
+    e.preventDefault()
+  }
+
   const { classes } = props;
 
   return (
@@ -130,6 +134,9 @@ const ResetPassword = (props) => {
             value={values.password}
             error={error.password}
             onChange={handleChange("password")}
+            onCut={handlePrevent}
+            onCopy={handlePrevent}
+            onPaste={handlePrevent}
             endAdornment={
               <InputAdornment position="end">
                 <IconButton
@@ -145,7 +152,8 @@ const ResetPassword = (props) => {
             labelWidth={140}
           />
         </FormControl>
-        {error.password && <FormHelperText error={true}>Length should be 8 chanracters and at least one uppercase letter, one lowercase letter and one number </FormHelperText>}
+        {error.password && <FormHelperText error={true}>
+          Minimum length is 8 characters with combination of uppercase, lowercase, number and a special character</FormHelperText>}
         <FormControl className={classes.textField} variant="outlined">
           <InputLabel error={error.confirmPassword} htmlFor="outlined-adornment-password">
             Confirm new password
@@ -156,6 +164,9 @@ const ResetPassword = (props) => {
             error={error.confirmPassword}
             value={values.confirmPassword}
             onChange={handleChange("confirmPassword")}
+            onCut={handlePrevent}
+            onCopy={handlePrevent}
+            onPaste={handlePrevent}
             labelWidth={160}
           />
         </FormControl>
