@@ -9,6 +9,7 @@ redis_server_pass = os.environ.get('REDIS_PASS', None)
 db_cluster = os.environ.get('ULCA_DS_PUBLISH_MONGO_CLUSTER', "mongodb://localhost:27017/")
 db = os.environ.get('ULCA_DS_PUBLISH_DB', "ulca")
 asr_collection = os.environ.get('ULCA_DS_PUBLISH_ASR_COL', "asr-dataset")
+asr_unlabeled_collection = os.environ.get('ULCA_DS_PUBLISH_ASR_UNLABELED_COL', "asr-unlabeled-dataset")
 ocr_collection = os.environ.get('ULCA_DS_PUBLISH_OCR_COL', "ocr-dataset")
 parallel_collection = os.environ.get('ULCA_DS_PUBLISH_PARALLEL_COL', "parallel-dataset")
 monolingual_collection = os.environ.get('ULCA_DS_PUBLISH_MONOLINGUAL_COL', "monolingual-dataset")
@@ -35,39 +36,38 @@ if isinstance(sample_size, str):
 pt_redis_db = os.environ.get('ULCA_PT_REDIS_DB', 0)
 if isinstance(pt_redis_db, str):
     pt_redis_db = eval(pt_redis_db)
+pub_dedup_redis_db = os.environ.get('ULCA_PUBLISH_DEDUP_REDIS_DB', 3)
+if isinstance(pub_dedup_redis_db, str):
+    pub_dedup_redis_db = eval(pub_dedup_redis_db)
 record_expiry_in_sec = os.environ.get('ULCA_PUBLISH_RECORD_EXPIRY_IN_SEC', 86400)
 if isinstance(record_expiry_in_sec, str):
     record_expiry_in_sec = eval(record_expiry_in_sec)
 shared_storage_path = os.environ.get('ULCA_SEARCH_SHARED_STORAGE_PATH', '/opt/')
 
-asr_immutable_keys = ["id", "audioFilename", "text", "audioHash", "textHash", "datasetType",
-                      "sourceLanguage", "fileLocation"]
-asr_non_tag_keys = ["id", "startTime", "endTime", "samplingRate", "audioFilename", "text", "submitter", "fileLocation"]
-asr_search_ignore_keys = ["_id", "tags", "submitter", "collectionSource", "license", "domain", "collectionMethod",
-                          "datasetType", "audioHash", "textHash", "fileLocation"]
-asr_updatable_keys = ["durationInSeconds"]
+asr_immutable_keys = ["id", "audioFilename", "text", "audioHash", "textHash", "datasetType", "sourceLanguage", "fileLocation", "lastModifiedOn", "createdOn"]
+asr_non_tag_keys = ["id", "startTime", "endTime", "samplingRate", "audioFilename", "text", "submitter", "fileLocation", "durationInSeconds", "duration", "lastModifiedOn", "createdOn"]
+asr_search_ignore_keys = ["_id", "tags", "submitter", "collectionSource", "license", "domain", "collectionMethod", "datasetType", "audioHash", "textHash", "fileLocation", "lastModifiedOn", "createdOn"]
+asr_updatable_keys = ["durationInSeconds", "duration", "version"]
 
-parallel_immutable_keys = ["id", "sourceText", "targetText", "sourceTextHash", "targetTextHash", "sourceLanguage",
-                           "targetLanguage", "datasetType"]
-parallel_updatable_keys = ["alignmentScore"]
+asr_unlabeled_immutable_keys = ["id", "audioFilename", "audioHash", "datasetType", "sourceLanguage", "fileLocation", "lastModifiedOn", "createdOn"]
+asr_unlabeled_non_tag_keys = ["id", "startTime", "endTime", "samplingRate", "audioFilename", "text", "submitter", "fileLocation", "durationInSeconds", "duration", "lastModifiedOn", "createdOn"]
+asr_unlabeled_search_ignore_keys = ["_id", "tags", "submitter", "collectionSource", "license", "domain", "collectionMethod", "datasetType", "audioHash", "fileLocation", "lastModifiedOn", "createdOn"]
+asr_unlabeled_updatable_keys = ["durationInSeconds", "duration", "version"]
 
-parallel_non_tag_keys = ["id", "score", "sourceText", "targetText", "submitter"]
-parallel_search_ignore_keys = ["_id", "tags", "submitter", "collectionSource", "license", "domain",
-                               "collectionMethod", "datasetType", "hashedKey", "sk", "derived", "sourceTextHash",
-                               "targetTextHash"]
+parallel_immutable_keys = ["id", "sourceText", "targetText", "sourceTextHash", "targetTextHash", "sourceLanguage", "targetLanguage", "datasetType", "lastModifiedOn", "createdOn"]
+parallel_updatable_keys = ["alignmentScore", "version"]
+parallel_non_tag_keys = ["id", "score", "sourceText", "targetText", "submitter", "lastModifiedOn", "createdOn"]
+parallel_search_ignore_keys = ["_id", "tags", "submitter", "collectionSource", "license", "domain", "collectionMethod", "datasetType", "hashedKey", "sk", "derived", "sourceTextHash", "targetTextHash", "lastModifiedOn", "createdOn"]
 
-ocr_immutable_keys = ["id", "imageFilename", "groundTruth", "imageHash", "groundTruthHash",
-                      "datasetType", "sourceLanguage", "fileLocation"]
-ocr_non_tag_keys = ["id", "boundingBox", "imageFilename", "groundTruth", "imageFilePath", "submitter", "fileLocation"]
-ocr_search_ignore_keys = ["_id", "tags", "submitter", "collectionSource", "license", "domain", "collectionMethod",
-                          "datasetType", "imageHash", "groundTruthHash", "fileLocation"]
-ocr_updatable_keys = []
+ocr_immutable_keys = ["id", "imageFilename", "groundTruth", "imageHash", "groundTruthHash", "datasetType", "sourceLanguage", "fileLocation", "lastModifiedOn", "createdOn"]
+ocr_non_tag_keys = ["id", "boundingBox", "imageFilename", "groundTruth", "imageFilePath", "submitter", "fileLocation", "lastModifiedOn", "createdOn"]
+ocr_search_ignore_keys = ["_id", "tags", "submitter", "collectionSource", "license", "domain", "collectionMethod", "datasetType", "imageHash", "groundTruthHash", "fileLocation", "lastModifiedOn", "createdOn"]
+ocr_updatable_keys = ["version"]
 
-mono_immutable_keys = ["id", "text", "textHash", "datasetType", "sourceLanguage"]
-mono_non_tag_keys = ["id", "text", "submitter"]
-mono_search_ignore_keys = ["_id", "tags", "submitter", "collectionSource", "license", "domain", "collectionMethod",
-                          "datasetType", "textHash"]
-mono_updatable_keys = []
+mono_immutable_keys = ["id", "text", "textHash", "datasetType", "sourceLanguage", "lastModifiedOn", "createdOn"]
+mono_non_tag_keys = ["id", "text", "submitter", "lastModifiedOn", "createdOn"]
+mono_search_ignore_keys = ["_id", "tags", "submitter", "collectionSource", "license", "domain", "collectionMethod", "datasetType", "textHash", "lastModifiedOn", "createdOn"]
+mono_updatable_keys = ["version"]
 
 publish_error_code = "3000_XXX"
 threads_threshold = 100
@@ -97,23 +97,16 @@ ulca_dataset_topic_partitions = os.environ.get('KAFKA_ULCA_DS_TOPIC_PARTITIONS',
 if isinstance(ulca_dataset_topic_partitions, str):
     ulca_dataset_topic_partitions = eval(ulca_dataset_topic_partitions)
 
-aws_access_key = os.environ.get('ULCA_AWS_S3_ACCESS_KEY', 'access-key')
-aws_secret_key = os.environ.get('ULCA_AWS_S3_SECRET_KEY', 'secret-key')
-aws_bucket_name = os.environ.get('ULCA_AWS_BUCKET_NAME', 'ulca-datasets')
-aws_link_prefix = f'http://{aws_bucket_name}.s3.amazonaws.com/'
 
-azure_connection_string = os.environ.get('ULCA_AZURE_CONNECTION_STRING', "azure_conn_string")
-azure_container_name = os.environ.get('ULCA_AZURE_FILE_CONTAINER', "ulca-prod-container")
-azure_account_name = os.environ.get('ULCA_AZURE_ACCOUNT_NAME', "azure_account")
-azure_link_prefix = f'https://{azure_account_name}.blob.core.windows.net/{azure_container_name}/'
-
-ocr_prefix = os.environ.get('ULCA_AWS_S3_OCR_PREFIX', 'ocr')
-asr_prefix = os.environ.get('ULCA_AWS_S3_ASR_PREFIX', 'asr')
-dataset_prefix = os.environ.get('ULCA_AWS_S3_DATASET_PREFIX', 'datasets')
-error_prefix = os.environ.get('ULCA_AWS_S3_ERROR_PREFIX', 'errors')
+ocr_prefix = os.environ.get('ULCA_OS_OCR_PREFIX', 'ocr')
+asr_prefix = os.environ.get('ULCA_OS_ASR_PREFIX', 'asr')
+asr_unlabeled_prefix = os.environ.get('ULCA_OS_ASR_UNLABELED_PREFIX', 'asr-unlabeled')
+dataset_prefix = os.environ.get('ULCA_OS_DATASET_PREFIX', 'datasets')
+error_prefix = os.environ.get('ULCA_OS_ERROR_PREFIX', 'errors')
 
 dataset_type_parallel = os.environ.get('DS_TYPE_PARALLEL', 'parallel-corpus')
 dataset_type_asr = os.environ.get('DS_TYPE_ASR', 'asr-corpus')
+dataset_type_asr_unlabeled = os.environ.get('DS_TYPE_ASR_UNLABELED', 'asr-unlabeled-corpus')
 dataset_type_ocr = os.environ.get('DS_TYPE_OCR', 'ocr-corpus')
 dataset_type_monolingual = os.environ.get('DS_TYPE_MONOLINGUAL', 'monolingual-corpus')
 

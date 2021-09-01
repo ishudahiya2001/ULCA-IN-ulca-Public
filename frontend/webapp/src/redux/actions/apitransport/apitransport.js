@@ -47,7 +47,11 @@ function success(res, api, dispatch) {
 }
 
 function error(err, api, dispatch) {
+<<<<<<< HEAD
   let errorMsg = err.response && err.response.data && err.response.data.why ? err.response.data.why : err.response.status ? Strings.error.message.http[err.response.status]:Strings.error.message.http.default;
+=======
+  let errorMsg = ((err.response && err.response.data && err.response.data.why) ? err.response.data.why : ((err.response && err.response.status&& Object.keys(Strings.error.message.http).includes(Number(err.response.status))) ? Strings.error.message.http[Number(err.response.status)]:Strings.error.message.http.default));
+>>>>>>> subheader
   if (api.errorMsg || api.errorMsg === null) {
     errorMsg = api.errorMsg === null ? "" : api.errorMsg;
   }

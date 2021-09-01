@@ -96,7 +96,6 @@ class PTRepo:
             result = []
             for key in key_list:
                 val = client.get(key)
-                #val = client.hgetall(key) incase value against the key is stored as a hash/dict
                 if val:
                     result.append(json.loads(val))
             return result
@@ -104,14 +103,21 @@ class PTRepo:
             log.exception(f'Exception in redis search: {e}', e)
             return None
 
-    def redis_key_inc(self, key, error):
+    def redis_key_inc(self, key, seconds, error):
         try:
             key = f'ServiceRequestNumber_{key}'
             client = self.get_redis_instance()
             value = "publishSuccess"
+            sec_value = "publishSuccessSeconds"
             if error:
                 value = "publishError"
-            client.hincrby(key, value, 1)
+                sec_value = "publishErrorSeconds"
+            val = client.hgetall(key)
+            if val:
+                client.hincrby(key, value, 1)
+                if seconds:
+                    seconds = int(seconds)
+                    client.hincrby(key, sec_value, seconds)
         except Exception as e:
             log.exception(f'Exception in redis_key_inc: {e}', e)
             return None

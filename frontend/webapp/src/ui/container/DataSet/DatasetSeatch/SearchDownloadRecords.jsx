@@ -29,7 +29,8 @@ import MultiAutocomplete from '../../../components/common/Autocomplete';
 import SubmitSearchRequest from '../../../../redux/actions/api/DataSet/DatasetSearch/SubmitSearchRequest';
 // import DatasetType from '../../../../configs/DatasetItems';
 import getLanguageLabel from '../../../../utils/getLabel';
-import APITransport from "../../../../redux/actions/apitransport/apitransport";
+import SearchAndDownloadAPI from '../../../../redux/actions/api/DataSet/DatasetSearch/SearchAndDownload';
+import APITransport from '../../../../redux/actions/apitransport/apitransport';
 const StyledMenu = withStyles({
 })((props) => (
     <Menu
@@ -50,6 +51,8 @@ const SearchAndDownloadRecords = (props) => {
     const { classes } = props;
     const url = UrlConfig.dataset;
     const urlMySearch = UrlConfig.mySearches;
+    const DatasetType = useSelector(state=>state.mySearchOptions.result.datasetType)
+    console.log(DatasetType)
     const dispatch = useDispatch();
     const param = useParams();
     const history = useHistory();
@@ -80,9 +83,11 @@ const SearchAndDownloadRecords = (props) => {
 
     useEffect(() => {
 
-        const userObj = new DatasetItemsAPI();
-        dispatch(APITransport(userObj));
+        // const userObj = new DatasetItemsAPI();
+        // dispatch(APITransport(userObj));
 
+        const apiData= new SearchAndDownloadAPI();
+        dispatch(APITransport(apiData))
         previousUrl.current = params;
 
         let data = detailedReport.responseData.filter((val) => {
@@ -96,9 +101,9 @@ const SearchAndDownloadRecords = (props) => {
             })
 
             let target = data[0].targetLanguage ? getLanguageLabel(data[0].targetLanguage) : getLanguageLabel(data[0].sourceLanguage)
-            let source = data[0].sourceLanguage && DatasetItems.sourceLanguage.filter(val => val.value === data[0].sourceLanguage[0])[0].label
-            let domains = data[0].domain && DatasetItems.domains.filter(val => val.value === data[0].domain[0])[0].label
-            let collectionMethod_collectionDescriptions = data[0].collection && DatasetItems.collectionMethod_collectionDescriptions.filter(val => val.value === data[0].collection[0])[0].label
+            let source = data[0].sourceLanguage && Language.filter(val => val.value === data[0].sourceLanguage[0])[0].label
+            let domain = data[0].domain && FilterBy.domain.filter(val => val.value === data[0].domain[0])[0].label
+            let collectionMethod = data[0].collection && FilterBy.collectionMethod.filter(val => val.value === data[0].collection[0])[0].label
             let label = data[0].search_criteria && data[0].search_criteria.split('|')[0]
             setFilterBy({
                 ...filterBy, domains, collectionMethod_collectionDescriptions
@@ -150,6 +155,8 @@ const SearchAndDownloadRecords = (props) => {
     const [state, setState] = useState({
         checkedA: false,
         checkedB: false,
+        checkedC: false,
+
     });
     const [label, setLabel] = useState('Parallel Dataset')
     const [srcError, setSrcError] = useState(false)
@@ -202,15 +209,15 @@ const SearchAndDownloadRecords = (props) => {
         });
     }
 
-    const makeSubmitAPICall = (src, tgt, domain, collectionMethod, type) => {
+    const makeSubmitAPICall = (src, tgt, domain, collectionMethod, type, originalSourceSentence = false) => {
         const Dataset = Object.keys(type)[0]
         setSnackbarInfo({
             ...snackbar,
             open: true,
-            message: 'Please wait while we process your request...',
+            message: 'Please wait while we process your request.',
             variant: 'info'
         })
-        const apiObj = new SubmitSearchRequest(Dataset, tgt, src, domain, collectionMethod)
+        const apiObj = new SubmitSearchRequest(Dataset, tgt, src, domain, collectionMethod, originalSourceSentence)
         fetch(apiObj.apiEndPoint(), {
             method: 'post',
             headers: apiObj.getHeaders().headers,
@@ -224,14 +231,23 @@ const SearchAndDownloadRecords = (props) => {
                     handleSnackbarClose()
 
                 } else {
-                    new Promise.reject("")
+                    setSnackbarInfo({
+                        ...snackbar,
+                        open: true,
+                        message: response.message ? response.message : "Something went wrong. Please try again.",
+                        variant: 'error'
+                    })
+                    if (res.status === 401) {
+                        setTimeout(() => history.push(`${process.env.PUBLIC_URL}/user/login`), 3000)
+
+                    }
                 }
             })
             .catch(err => {
                 setSnackbarInfo({
                     ...snackbar,
                     open: true,
-                    message: 'Failed to submit your search request...',
+                    message: "Something went wrong. Please try again.",
                     variant: 'error'
                 })
             })
@@ -255,7 +271,9 @@ const SearchAndDownloadRecords = (props) => {
         if (datasetType['parallel-corpus']) {
             if (languagePair.source && languagePair.target.length) {
                 let source = getValueForLabel(languagePair.source).value
-                makeSubmitAPICall(source, tgt, domain, collectionMethod, datasetType)
+            //    makeSubmitAPICall(source, tgt, domain, collectionMethod, datasetType)
+                makeSubmitAPICall(source, tgt, domain, collectionMethod, datasetType, state.checkedC)
+                //  makeSubmitAPICall(languagePair.source, tgt, domain, collectionMethod, datasetType)
             }
 
             else if (!languagePair.source && !languagePair.target.length) {
@@ -293,9 +311,10 @@ const SearchAndDownloadRecords = (props) => {
             <>
                 <Button className={classes.menuStyle}
                     color="inherit"
+                    fullWidth
                     onClick={(e) => openEl(e.currentTarget)}
                     variant="text">
-                    <Typography variant="subtitle1">
+                    <Typography variant="body1">
                         {label}
                     </Typography>
                     <DownIcon />
@@ -406,13 +425,14 @@ const SearchAndDownloadRecords = (props) => {
             <Grid container spacing={3}>
                 <Grid className={classes.leftSection} item xs={12} sm={5} md={4} lg={4} xl={4}>
                     <Grid container spacing={2}>
-                        <Grid className={classes.breadcrum} item xs={12} sm={12} md={12} lg={12} xl={12}>
+                        {/* <Grid className={classes.breadcrum} item xs={12} sm={12} md={12} lg={12} xl={12}>
                             <BreadCrum links={(params === 'inprogress' || params === 'completed') ? [url, urlMySearch] : [url]} activeLink="Search & Download Records" />
-                        </Grid>
+                        </Grid> */}
                         <Grid item className={(params === 'inprogress' || params === 'completed') && classes.blurOut}
                             xs={12} sm={12} md={12} lg={12} xl={12}
                         >
-                            <Typography className={classes.subHeader} variant="body1">Select Dataset Type</Typography>
+                            <Typography className={classes.subType} variant="body1">Select Dataset Type</Typography>
+                            <hr className={classes.styleHr} />
                             <div className={classes.buttonDiv}>
                                 {renderDatasetButtons()}
                             </div>
@@ -447,7 +467,8 @@ const SearchAndDownloadRecords = (props) => {
                             </Grid>
 
                             {renderCheckBox("checkedA", "primary", "Vetted by multiple annotators")}
-                            {renderCheckBox("checkedB", "primary", "Source sentences manually translated by multiple translators")}
+                            {datasetType['parallel-corpus'] && renderCheckBox("checkedB", "primary", "Source sentences manually translated by multiple translators")}
+                            {datasetType['parallel-corpus'] && renderCheckBox("checkedC", "primary", " Original sentence in source language")}
                             {renderclearNsubmitButtons()}
                         </Grid>
                     </Grid>

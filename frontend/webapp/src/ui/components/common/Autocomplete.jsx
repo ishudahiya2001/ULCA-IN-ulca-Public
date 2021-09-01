@@ -12,13 +12,17 @@ const checkedIcon = <CheckBoxIcon fontSize="small" />;
 export default function CheckboxesTags(props) {
   return (
     <Autocomplete
+<<<<<<< HEAD
       //  multiple={props.multiple}
       multiple
+=======
+      multiple={!props.single}
+>>>>>>> subheader
       id={props.id}
       options={props.options}
       disableCloseOnSelect
       value={props.value}
-      getOptionLabel={(option) => option.label}
+      getOptionLabel={(option) => option.label ? option.label : ""}
       onChange={(event, value, reason) => props.handleOnChange(value, props.filter)}
       getOptionSelected={(option, value) => {
         return option.label === value.label

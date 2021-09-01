@@ -1,8 +1,5 @@
 import logging
-import multiprocessing
-import threading
 import time
-from functools import partial
 from logging.config import dictConfig
 from configs.configs import ds_batch_size, no_of_parallel_processes, asr_prefix, \
     sample_size, offset, limit, asr_immutable_keys, asr_non_tag_keys, dataset_type_asr, user_mode_pseudo, \
@@ -13,6 +10,7 @@ from kafkawrapper.producer import Producer
 from events.error import ErrorEvent
 from processtracker.processtracker import ProcessTracker
 from events.metrics import MetricEvent
+from .datasetservice import DatasetService
 
 log = logging.getLogger('file')
 
@@ -23,6 +21,7 @@ prod = Producer()
 error_event = ErrorEvent()
 pt = ProcessTracker()
 metrics = MetricEvent()
+service = DatasetService()
 
 class ASRService:
     def __init__(self):
@@ -32,7 +31,7 @@ class ASRService:
     Method to load ASR dataset into the mongo db
     params: request (record to be inserted)
     '''
-    def load_asr_dataset_single(self, request):
+    def load_asr_dataset(self, request):
         try:
             metadata, record = request, request["record"]
             error_list, pt_list, metric_list = [], [], []
@@ -45,91 +44,46 @@ class ASRService:
                             repo.insert([result[1]])
                             count += 1
                             metrics.build_metric_event(result[1], metadata, None, None)
-                        pt.update_task_details({"status": "SUCCESS", "serviceRequestNumber": metadata["serviceRequestNumber"]})
+                        pt.update_task_details({"status": "SUCCESS", "serviceRequestNumber": metadata["serviceRequestNumber"],
+                                                "durationInSeconds": record["durationInSeconds"], "datasetType": dataset_type_asr})
                     elif result[0] == "UPDATE":
-                        pt.update_task_details({"status": "SUCCESS", "serviceRequestNumber": metadata["serviceRequestNumber"]})
-                        metrics.build_metric_event(result[2], metadata, None, None)
+                        pt.update_task_details({"status": "SUCCESS", "serviceRequestNumber": metadata["serviceRequestNumber"],
+                                                "durationInSeconds": record["durationInSeconds"], "datasetType": dataset_type_asr, "isUpdate": True})
+                        metric_record = (result[1], result[2])
+                        metrics.build_metric_event(metric_record, metadata, None, True)
                         updates += 1
                     elif result[0] == "FAILED":
                         error_list.append(
                             {"record": result[1], "code": "UPLOAD_FAILED", "datasetName": metadata["datasetName"],
                              "datasetType": dataset_type_asr, "serviceRequestNumber": metadata["serviceRequestNumber"],
-                             "message": "Upload to s3 bucket failed"})
-                        pt.update_task_details({"status": "FAILED", "serviceRequestNumber": metadata["serviceRequestNumber"]})
+                             "message": "Upload of audio file to object store failed"})
+                        pt.update_task_details({"status": "FAILED", "serviceRequestNumber": metadata["serviceRequestNumber"],
+                                                "durationInSeconds": record["durationInSeconds"], "datasetType": dataset_type_asr})
                     else:
                         error_list.append({"record": result[1], "code": "DUPLICATE_RECORD", "originalRecord": result[2],
                                            "datasetType": dataset_type_asr,
                                            "serviceRequestNumber": metadata["serviceRequestNumber"],
                                            "message": "This record is already available in the system",
                                            "datasetName": metadata["datasetName"]})
-                        pt.update_task_details({"status": "FAILED", "serviceRequestNumber": metadata["serviceRequestNumber"]})
+                        pt.update_task_details({"status": "FAILED", "serviceRequestNumber": metadata["serviceRequestNumber"],
+                                                "durationInSeconds": record["durationInSeconds"], "datasetType": dataset_type_asr})
+                else:
+                    log.error(f'INTERNAL ERROR: Failing record due to internal error: ID: {record["id"]}, SRN: {metadata["serviceRequestNumber"]}')
+                    error_list.append(
+                        {"record": record, "code": "INTERNAL_ERROR", "originalRecord": record,
+                         "datasetType": dataset_type_asr, "datasetName": metadata["datasetName"],
+                         "serviceRequestNumber": metadata["serviceRequestNumber"],
+                         "message": "There was an exception while processing this record!"})
+                    pt.update_task_details(
+                        {"status": "FAILED", "serviceRequestNumber": metadata["serviceRequestNumber"], "durationInSeconds": record["durationInSeconds"],
+                         "datasetType": dataset_type_asr})
             if error_list:
                 error_event.create_error_event(error_list)
-            log.info(f'ASR - {metadata["serviceRequestNumber"]} -- I: {count}, U: {updates}, "E": {len(error_list)}')
+            log.info(f'ASR - {metadata["serviceRequestNumber"]} - {record["id"]} -- I: {count}, U: {updates}, "E": {len(error_list)}')
         except Exception as e:
             log.exception(e)
             return {"message": "EXCEPTION while loading ASR dataset!!", "status": "FAILED"}
         return {"status": "SUCCESS", "total": 1, "inserts": count, "updates": updates, "invalid": error_list}
-
-    '''
-    Method to load ASR dataset into the mongo db in bulk -- currently not in use.
-    params: request (record to be inserted)
-    '''
-    def load_asr_dataset(self, request):
-        log.info("Loading ASR Dataset.....")
-        try:
-            metadata = request
-            record = request["record"]
-            ip_data = [record]
-            batch_data, error_list, pt_list = [], [], []
-            total, count, updates, batch = len(ip_data), 0, 0, ds_batch_size
-            if ip_data:
-                func = partial(self.get_enriched_asr_data, metadata=metadata)
-                pool_enrichers = multiprocessing.Pool(no_of_parallel_processes)
-                enrichment_processors = pool_enrichers.map_async(func, ip_data).get()
-                for result in enrichment_processors:
-                    if result:
-                        if result[0] == "INSERT":
-                            if len(batch_data) == batch:
-                                if metadata["userMode"] != user_mode_pseudo:
-                                    repo.insert(batch_data)
-                                count += len(batch_data)
-                                batch_data = []
-                            batch_data.append(result[1])
-                            pt_list.append({"status": "SUCCESS", "serviceRequestNumber": metadata["serviceRequestNumber"],
-                                            "currentRecordIndex": metadata["currentRecordIndex"]})
-                            metrics.build_metric_event(result[1], metadata, None, None)
-                        elif result[0] == "FAILED":
-                            error_list.append({"record": result[1], "code": "UPLOAD_FAILED", "datasetName": metadata["datasetName"],
-                                               "datasetType": dataset_type_asr, "serviceRequestNumber": metadata["serviceRequestNumber"],
-                                               "message": "Upload to s3 bucket failed"})
-                            pt_list.append({"status": "FAILED", "code": "UPLOAD_FAILED", "serviceRequestNumber": metadata["serviceRequestNumber"],
-                                            "currentRecordIndex": metadata["currentRecordIndex"]})
-                        elif result[0] == "UPDATE":
-                            pt_list.append({"status": "SUCCESS", "serviceRequestNumber": metadata["serviceRequestNumber"],
-                                            "currentRecordIndex": metadata["currentRecordIndex"]})
-                            updates += 1
-                            metrics.build_metric_event(result[2], metadata, None, None)
-                        else:
-                            error_list.append({"record": result[1], "code": "DUPLICATE_RECORD", "originalRecord": result[2],
-                                               "datasetType": dataset_type_asr, "serviceRequestNumber": metadata["serviceRequestNumber"],
-                                               "message": "This record is already available in the system", "datasetName": metadata["datasetName"]})
-                            pt_list.append({"status": "FAILED", "code": "DUPLICATE_RECORD", "serviceRequestNumber": metadata["serviceRequestNumber"],
-                                            "currentRecordIndex": metadata["currentRecordIndex"]})
-                pool_enrichers.close()
-                if batch_data:
-                    if metadata["userMode"] != user_mode_pseudo:
-                        repo.insert(batch_data)
-                    count += len(batch_data)
-            if error_list:
-                error_event.create_error_event(error_list)
-            for pt_rec in pt_list:
-                pt.update_task_details(pt_rec)
-            log.info(f'Done! -- INPUT: {total}, INSERTS: {count}, UPDATES: {updates}, "ERROR_LIST": {len(error_list)}')
-        except Exception as e:
-            log.exception(e)
-            return {"message": "EXCEPTION while loading dataset!!", "status": "FAILED"}
-        return {"status": "SUCCESS", "total": total, "inserts": count, "updates": updates, "invalid": error_list}
 
     '''
     Method to run dedup checks on the input record and enrich if needed.
@@ -138,13 +92,17 @@ class ASRService:
     '''
     def get_enriched_asr_data(self, data, metadata):
         try:
-            hashes = {data["audioHash"], data["textHash"]}
+            hashes = [data["audioHash"], data["textHash"]]
             record = self.get_asr_dataset_internal({"tags": {"$all": hashes}})
             if record:
-                dup_data = self.enrich_duplicate_data(data, record, metadata)
+                if isinstance(record, list):
+                    record = record[0]
+                dup_data = service.enrich_duplicate_data(data, record, metadata, asr_immutable_keys, asr_updatable_keys, asr_non_tag_keys)
                 if dup_data:
-                    repo.update(dup_data)
-                    return "UPDATE", data, record
+                    dup_data["lastModifiedOn"] = eval(str(time.time()).replace('.', '')[0:13])
+                    if metadata["userMode"] != user_mode_pseudo:
+                        repo.update(dup_data)
+                    return "UPDATE", dup_data, record
                 else:
                     return "DUPLICATE", data, record
             insert_data = data
@@ -154,7 +112,7 @@ class ASRService:
                         insert_data[key] = [insert_data[key]]
             insert_data["datasetType"] = metadata["datasetType"]
             insert_data["datasetId"] = [metadata["datasetId"]]
-            insert_data["tags"] = self.get_tags(insert_data)
+            insert_data["tags"] = service.get_tags(insert_data, asr_non_tag_keys)
             if metadata["userMode"] != user_mode_pseudo:
                 epoch = eval(str(time.time()).replace('.', '')[0:13])
                 s3_file_name = f'{metadata["datasetId"]}|{epoch}|{data["audioFilename"]}'
@@ -162,63 +120,11 @@ class ASRService:
                 if not object_store_path:
                     return "FAILED", insert_data, insert_data
                 insert_data["objStorePath"] = object_store_path
+                insert_data["lastModifiedOn"] = insert_data["createdOn"] = eval(str(time.time()).replace('.', '')[0:13])
             return "INSERT", insert_data, insert_data
         except Exception as e:
-            log.exception(e)
+            log.exception(f'Exception while getting enriched data: {e}', e)
             return None
-
-    '''
-    Method to check and process duplicate records.
-    params: data (record to be inserted)
-    params: record (duplicate record found in the DB)
-    params: data (record to be inserted)
-    '''
-    def enrich_duplicate_data(self, data, record, metadata):
-        db_record = record
-        found = False
-        for key in data.keys():
-            if key in asr_updatable_keys:
-                found = True
-                db_record[key] = data[key]
-                continue
-            if key not in asr_immutable_keys:
-                if key not in db_record.keys():
-                    found = True
-                    db_record[key] = [data[key]]
-                elif isinstance(data[key], list):
-                    pairs = zip(data[key], db_record[key])
-                    if any(x != y for x, y in pairs):
-                        found = True
-                        db_record[key].extend(data[key])
-                else:
-                    if isinstance(db_record[key], list):
-                        if data[key] not in db_record[key]:
-                            found = True
-                            db_record[key].append(data[key])
-                    else:
-                        if db_record[key] != data[key]:
-                            found = True
-                            db_record[key] = [db_record[key]]
-                            db_record[key].append(data[key])
-                        else:
-                            db_record[key] = [db_record[key]]
-        if found:
-            db_record["datasetId"].append(metadata["datasetId"])
-            db_record["tags"] = self.get_tags(record)
-            return db_record
-        else:
-            return False
-
-    '''
-    Method to fetch tags for a record
-    params: insert_data (record to be used to fetch tags)
-    '''
-    def get_tags(self, insert_data):
-        tag_details = {}
-        for key in insert_data:
-            if key not in asr_non_tag_keys:
-                tag_details[key] = insert_data[key]
-        return list(utils.get_tags(tag_details))
 
     '''
     Method to fetch records from the DB
@@ -229,7 +135,11 @@ class ASRService:
             exclude = {"_id": False}
             data = repo.search(query, exclude, None, None)
             if data:
-                return data[0]
+                asr_data = data[0]
+                if asr_data:
+                    return asr_data[0]
+                else:
+                    return None
             else:
                 return None
         except Exception as e:
@@ -254,7 +164,7 @@ class ASRService:
             if 'collectionSource' in query.keys():
                 tags.extend(query["collectionMode"])
             if 'license' in query.keys():
-                tags.append(query["licence"])
+                tags.extend(query["licence"])
             if 'domain' in query.keys():
                 tags.extend(query["domain"])
             if 'channel' in query.keys():
@@ -264,25 +174,27 @@ class ASRService:
             if 'datasetId' in query.keys():
                 tags.append(query["datasetId"])
             if 'multipleContributors' in query.keys():
-                db_query[f'collectionMethod.{query["multipleContributors"]}'] = {"$exists": True}
+                if query['multipleContributors']:
+                    db_query[f'collectionMethod.1'] = {"$exists": True}
             if tags:
                 db_query["tags"] = {"$all": tags}
             exclude = {"_id": False}
             for key in asr_search_ignore_keys:
                 exclude[key] = False
-            result = repo.search(db_query, exclude, off, lim)
+            result, hours = repo.search(db_query, exclude, off, lim)
             count = len(result)
             log.info(f'Result --- Count: {count}, Query: {query}')
+            log.info(f'Result --- Hours: {hours}, Query: {query}')
             if result:
                 size = sample_size if count > sample_size else count
                 path, path_sample = utils.push_result_to_object_store(result, query["serviceRequestNumber"], size)
                 if path:
-                    op = {"serviceRequestNumber": query["serviceRequestNumber"], "count": count, "dataset": path, "datasetSample": path_sample}
+                    op = {"serviceRequestNumber": query["serviceRequestNumber"], "count": hours, "dataset": path, "datasetSample": path_sample}
                     pt.task_event_search(op, None)
                 else:
                     log.error(f'There was an error while pushing result to S3')
-                    error = {"code": "S3_UPLOAD_FAILED", "datasetType": dataset_type_asr, "serviceRequestNumber": query["serviceRequestNumber"],
-                                                   "message": "There was an error while pushing result to S3"}
+                    error = {"code": "OS_UPLOAD_FAILED", "datasetType": dataset_type_asr, "serviceRequestNumber": query["serviceRequestNumber"],
+                                                   "message": "There was an error while pushing result to object store"}
                     op = {"serviceRequestNumber": query["serviceRequestNumber"], "count": 0, "sample": [], "dataset": None, "datasetSample": None}
                     pt.task_event_search(op, error)
             else:
