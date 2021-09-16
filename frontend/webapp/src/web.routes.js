@@ -160,7 +160,7 @@ export default function App() {
             currentMenu="submit-model"
             dontShowHeader={false}
             type = {"models"}
-            index={2}
+            index={3}
           />
           <PrivateRoute
             path={`${process.env.PUBLIC_URL}/dashboard`}
@@ -237,7 +237,7 @@ export default function App() {
             index={2}
           />
 
-          {/* <Route
+          <Route
             path={`${process.env.PUBLIC_URL}/model/leaderboard`}
             render={(props) =>
             <PublicLayout type = {"models"}
@@ -246,7 +246,7 @@ export default function App() {
             }
             
 
-          /> */}
+          />
 
           {/* <Route
             path={`${process.env.PUBLIC_URL}/user/reset-password/:email/:userId/:time`}
