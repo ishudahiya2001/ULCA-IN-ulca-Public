@@ -8,7 +8,7 @@ const initialState = {
   benchmarkDataset: {},
 };
 
-const updateBenchmarkDataset = (payload) => {
+const updateInfo = (payload) => {
   let newPayload = Object.assign({}, JSON.parse(JSON.stringify(payload)));
   let keysArr = Object.keys(payload.benchmarkDataset);
   let valuesArr = Object.values(payload.benchmarkDataset);
@@ -22,6 +22,18 @@ const updateBenchmarkDataset = (payload) => {
       };
     });
   });
+  
+  keysArr = Object.keys(payload.metric);
+  valuesArr = Object.values(payload.metric);
+  valuesArr.forEach((val, i) => {
+    newPayload.metric[keysArr[i]] = payload.metric[keysArr[i]].map((val) => {
+      return {
+        value: val,
+        label: val.toUpperCase(),
+      };
+    });
+  });
+
   return newPayload;
 };
 
@@ -30,7 +42,7 @@ const reducer = (state = initialState, action) => {
     case C.SEARCH_MODEL_FILTER:
       return {
         ...state,
-        ...updateBenchmarkDataset(action.payload),
+        ...updateInfo(action.payload),
       };
     default:
       return {

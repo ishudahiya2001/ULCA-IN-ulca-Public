@@ -18,6 +18,7 @@ import APITransport from "../../../../redux/actions/apitransport/apitransport";
 import aunthenticate from "../../../../configs/authenticate";
 import Theme from "../../../theme/theme-default";
 import SearchModelFilterAPI from "../../../../redux/actions/api/Model/ModelLeaderboard/SearchModelFilter";
+import SingleAutoComplete from "../../../components/common/SingleAutoComplete";
 
 const StyledMenu = withStyles({})((props) => (
   <Menu
@@ -183,20 +184,6 @@ const Benchmark = (props) => {
     );
   };
 
-  const renderFilterByfield = (id, label, value, filter) => {
-    return (
-      <Autocomplete
-        disableClearable
-        value={filterBy[id]}
-        id={id}
-        options={FilterBy[id]}
-        //  onChange={(event, data) => handleFilterByChange(data, id)}
-        renderInput={(params) => (
-          <TextField fullWidth {...params} label={label} variant="standard" />
-        )}
-      />
-    );
-  };
   const renderTexfield = (id, label, value, options, filter) => {
     let labels = Language.map((lang) => lang.label);
     return (
@@ -219,9 +206,6 @@ const Benchmark = (props) => {
     );
   };
 
-  const getTargetLang = () => {
-    return Language.filter((lang) => lang.label !== languagePair.source);
-  };
   const renderclearNsubmitButtons = () => {
     return (
       <Grid container className={classes.clearNSubmit}>
@@ -292,16 +276,28 @@ const Benchmark = (props) => {
                   {getTitle()}
                 </Typography>
                 <div className={classes.subHeader}>
-                  {datasetType === "translation" &&
-                    renderTexfield("source", "Source Language *")}
+                  {datasetType === "translation" && (
+                    <SingleAutoComplete
+                      id="source"
+                      value={languagePair.source}
+                      placeholder="Source Language *"
+                      labels={Language}
+                      handleChange={handleLanguagePairChange}
+                    />
+                  )}
                 </div>
                 <div className={classes.autoComplete}>
-                  {renderTexfield(
-                    "target",
-                    datasetType === "translation"
-                      ? "Target Language *"
-                      : "Language *"
-                  )}
+                  <SingleAutoComplete
+                    id="target"
+                    value={languagePair.target}
+                    placeholder={
+                      datasetType === "translation"
+                        ? "Target Language *"
+                        : "Language *"
+                    }
+                    labels={Language}
+                    handleChange={handleLanguagePairChange}
+                  />
                 </div>
                 <Typography className={classes.subHeader} variant="body1">
                   Filter by
@@ -316,13 +312,13 @@ const Benchmark = (props) => {
                     lg={12}
                     xl={12}
                   >
-                    
-                    {/* {renderFilterByfield(
-                      "metric",
-                      "Metric *",
-                      filterBy.metric,
-                      FilterBy.metric
-                    )} */}
+                    <SingleAutoComplete
+                      id="metric"
+                      value={filterBy.metric}
+                      placeholder="Metric *"
+                      labels={FilterBy.metric ? FilterBy.metric : []}
+                      handleChange={handleFilterByChange}
+                    />
                   </Grid>
                   <Grid
                     className={classes.subHeader}
@@ -333,12 +329,17 @@ const Benchmark = (props) => {
                     lg={12}
                     xl={12}
                   >
-                    {/* {renderFilterByfield(
-                      "benchmarkDataset",
-                      "Benchmark Dataset *",
-                      filterBy.benchmarkDataset,
-                      FilterBy.benchmarkDataset
-                    )} */}
+                    <SingleAutoComplete
+                      id="benchmarkDataset"
+                      value={filterBy.benchmarkDataset}
+                      placeholder="Benchmark Dataset *"
+                      labels={
+                        FilterBy.benchmarkDataset
+                          ? FilterBy.benchmarkDataset
+                          : []
+                      }
+                      handleChange={handleFilterByChange}
+                    />
                   </Grid>
                 </Grid>
 
