@@ -13,12 +13,11 @@ import { useDispatch, useSelector } from "react-redux";
 import { useState, useEffect } from "react";
 import { useParams } from "react-router";
 import Autocomplete from "@material-ui/lab/Autocomplete";
-import { Language, FilterBy } from "../../../../configs/DatasetItems";
-import { ModelTask } from "../../../../configs/DatasetItems";
 import SearchModel from "../../../../redux/actions/api/Model/ModelSearch/SearchModel";
 import APITransport from "../../../../redux/actions/apitransport/apitransport";
 import aunthenticate from "../../../../configs/authenticate";
 import Theme from "../../../theme/theme-default";
+import SearchModelFilterAPI from "../../../../redux/actions/api/Model/ModelLeaderboard/SearchModelFilter";
 
 const StyledMenu = withStyles({})((props) => (
   <Menu
@@ -39,18 +38,22 @@ const Benchmark = (props) => {
   const { classes } = props;
   const dispatch = useDispatch();
   const param = useParams();
-  const searchFilter = useSelector((state) => state.searchFilter);
+  const [datasetType, setDatasetType] = useState("translation");
+  const searchFilter = useSelector((state) => state.searchModelFilter);
+  const Language = searchFilter.sourceLanguage;
+  const FilterBy = {
+    metric: searchFilter.metric[datasetType],
+    benchmarkDataset: searchFilter.benchmarkDataset[datasetType],
+  };
   const [languagePair, setLanguagePair] = useState({
-    source: searchFilter.source,
-    target: searchFilter.target,
+    source: "",
+    target: [],
   });
   const [filterBy, setFilterBy] = useState({
     domain: "",
-    source: "",
-    collectionMethod: "",
+    metric: "",
+    benchmarkDataset: "",
   });
-
-  const [datasetType, setDatasetType] = useState(searchFilter.type);
 
   const makeSubmitAPICall = (src, tgt, type) => {
     const Dataset = Object.keys(type)[0];
@@ -59,46 +62,28 @@ const Benchmark = (props) => {
   };
 
   useEffect(() => {
-    if (aunthenticate()) {
-      const type = searchFilter.type;
-      if (type["translation"] !== undefined) {
-        const source = getValueForLabel(languagePair.source).value;
-        const target = languagePair.target.value;
-        makeSubmitAPICall(source, target, type);
-      } else {
-        const source =
-          languagePair.target !== "" ? languagePair.target.value : "";
-        makeSubmitAPICall(source, "", type);
-      }
-    }
+    const apiObj = new SearchModelFilterAPI();
+    dispatch(APITransport(apiObj));
   }, []);
 
-  const handleCheckboxChange = (event) => {
-    setState({ ...state, [event.target.name]: event.target.checked });
-  };
   const handleLanguagePairChange = (value, property) => {
     setLanguagePair({ ...languagePair, [property]: value });
 
     if (property === "source") setSrcError(false);
     else setTgtError(false);
   };
+
   const handleFilterByChange = (value, property) => {
     setFilterBy({ ...filterBy, [property]: value });
   };
+
   const [snackbar, setSnackbarInfo] = useState({
     open: false,
     message: "",
     variant: "success",
   });
-  const [state, setState] = useState({
-    checkedA: false,
-    checkedB: false,
-    checkedC: false,
-  });
 
-  const modelLabel = ModelTask.filter(
-    (task) => task.value === searchFilter.type
-  )[0].label;
+  const modelLabel = "Translation";
   const [label, setLabel] = useState(modelLabel);
   const [srcError, setSrcError] = useState(false);
   const [tgtError, setTgtError] = useState(false);
@@ -110,7 +95,6 @@ const Benchmark = (props) => {
     setSrcError(false);
     setTgtError(false);
   };
-  
 
   const getTitle = () => {
     if (datasetType === "translation") return "Select Language Pair";
@@ -179,7 +163,7 @@ const Benchmark = (props) => {
           onClose={(e) => handleClose(e)}
           className={classes.styledMenu1}
         >
-          {ModelTask.map((menu) => {
+          {searchFilter.task.map((menu) => {
             return (
               <MenuItem
                 value={menu.value}
@@ -200,13 +184,12 @@ const Benchmark = (props) => {
   };
 
   const renderFilterByfield = (id, label, value, filter) => {
-    let filterByOptions = ["All"];
     return (
       <Autocomplete
         disableClearable
-        value="All"
+        value={filterBy[id]}
         id={id}
-        options={filterByOptions}
+        options={FilterBy[id]}
         //  onChange={(event, data) => handleFilterByChange(data, id)}
         renderInput={(params) => (
           <TextField fullWidth {...params} label={label} variant="standard" />
@@ -310,15 +293,14 @@ const Benchmark = (props) => {
                 </Typography>
                 <div className={classes.subHeader}>
                   {datasetType === "translation" &&
-                    renderTexfield(
-                      "source",
-                      "Source Language *"
-                    )}
+                    renderTexfield("source", "Source Language *")}
                 </div>
                 <div className={classes.autoComplete}>
                   {renderTexfield(
                     "target",
-                    datasetType === "translation"?"Target Language *":"Language *"
+                    datasetType === "translation"
+                      ? "Target Language *"
+                      : "Language *"
                   )}
                 </div>
                 <Typography className={classes.subHeader} variant="body1">
@@ -334,12 +316,29 @@ const Benchmark = (props) => {
                     lg={12}
                     xl={12}
                   >
-                    {renderFilterByfield(
+                    
+                    {/* {renderFilterByfield(
                       "metric",
-                      "Metric",
-                      filterBy.domain,
-                      FilterBy.domain
-                    )}
+                      "Metric *",
+                      filterBy.metric,
+                      FilterBy.metric
+                    )} */}
+                  </Grid>
+                  <Grid
+                    className={classes.subHeader}
+                    item
+                    xs={12}
+                    sm={12}
+                    md={12}
+                    lg={12}
+                    xl={12}
+                  >
+                    {/* {renderFilterByfield(
+                      "benchmarkDataset",
+                      "Benchmark Dataset *",
+                      filterBy.benchmarkDataset,
+                      FilterBy.benchmarkDataset
+                    )} */}
                   </Grid>
                 </Grid>
 
